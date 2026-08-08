@@ -1,40 +1,43 @@
 #!/bin/bash
+# Check Point Nano Agent Nginx compatibility verifier
+# SPDX-License-Identifier: Apache-2.0
 
-initializeEnviroment()
-{
-    TMP_ENCODE=""
-    CURRENT_TIME=""
-    PACKAGE_VERSION=""
-    CUR_NGINX_ALREADY_SUPPORTED=false
-    NUMBER_OF_CONFIGURATION_FLAGS=0
-    TMP_NGINX_UNPARSED_CONFIGURATION="/tmp/nginx_unparsed_tmp_conf.txt"
-    TMP_NGINX_PARSED_CONFIGURATION_FLAGS="/tmp/nginx_parsed_conf_flags.txt"
-    TMP_DECODED_FILE_PATH="/tmp/decoded_file.txt"
-    IS_ALPINE=false
-    if [[ ! -z "$(cat /etc/*release | grep alpine)" ]]; then
-        IS_ALPINE=true
-    fi
+set -euo pipefail
 
-    if [[ $PRODUCT_TYPE == "kong" ]]; then
-        SERVER_TYPE="$PRODUCT_TYPE"
-        IS_KONG=true
-        nginx_cmd=nginx
-        if [[ -f $NGINX_INPUT_PATH ]]; then
-            nginx_cmd="$NGINX_INPUT_PATH"
-        fi
-    else
-        SERVER_TYPE="nginx"
-        IS_KONG=false
-        nginx_cmd=nginx
-        if [[ -n "$(command -v kong)" ]]; then
-            SERVER_TYPE="kong"
-            IS_KONG=true
-            if [[ -f /usr/local/openresty/nginx/sbin/nginx ]]; then
-                nginx_cmd='/usr/local/openresty/nginx/sbin/nginx'
-            fi
-        fi
-    fi
-}
+# Global variables
+TMP_ENCODE=""
+CURRENT_TIME=""
+PACKAGE_VERSION="1.0.0"
+CUR_NGINX_ALREADY_SUPPORTED=false
+NUMBER_OF_CONFIGURATION_FLAGS=0
+TMP_NGINX_UNPARSED_CONFIGURATION="/tmp/nginx_unparsed_tmp_conf.txt"
+TMP_NGINX_PARSED_CONFIGURATION_FLAGS="/tmp/nginx_parsed_conf_flags.txt"
+TMP_DECODED_FILE_PATH="/tmp/decoded_file.txt"
+TMP_NGINX_VERSION_FILE="/tmp/nginx_version_file.txt"
+IS_ALPINE=false
+IS_DEBUG_MODE_ACTIVE=false
+IS_VERBOSE_MODE_ACTIVE=false
+IS_FORCE_OUTPUT=false
+IS_OVERWRITE_FILE=false
+IS_OUTPUT_NAME_MODE_ACTIVE=false
+FILE_NAME=""
+PRODUCT_TYPE=""
+PRODUCT_VERSION=""
+NGINX_INPUT_PATH=""
+SERVER_TYPE=""
+IS_KONG=false
+nginx_cmd="nginx"
+BUILT_BY_GCC_FLAG=""
+CONFIGURATION_FLAGS=""
+CONFIGURATION_FLAGES_NEED_TO_BE_PARSED=""
+CC_OPTIONAL_FLAGS=""
+COMBINED_CONFIGURATION_FLAGS=""
+NGINX_VERSION=""
+KONG_VERSION=""
+GCC_VERSION=""
+RELEASE_VERSION=""
+EQUAL_FLAGS=false
+found_equal_flag=false
 
 usage()
 {
@@ -68,7 +71,34 @@ debug()
 {
     local debug_message=$1
     if [[ $IS_DEBUG_MODE_ACTIVE == true ]]; then
-        echo -e $debug_message
+        echo -e "$debug_message"
+    fi
+}
+
+initializeEnvironment()
+{
+    if [[ ! -z "$(cat /etc/*release 2>/dev/null | grep -i alpine)" ]]; then
+        IS_ALPINE=true
+    fi
+
+    if [[ $PRODUCT_TYPE == "kong" ]]; then
+        SERVER_TYPE="$PRODUCT_TYPE"
+        IS_KONG=true
+        nginx_cmd="nginx"
+        if [[ -f $NGINX_INPUT_PATH ]]; then
+            nginx_cmd="$NGINX_INPUT_PATH"
+        fi
+    else
+        SERVER_TYPE="nginx"
+        IS_KONG=false
+        nginx_cmd="nginx"
+        if command -v kong >/dev/null 2>&1; then
+            SERVER_TYPE="kong"
+            IS_KONG=true
+            if [[ -f /usr/local/openresty/nginx/sbin/nginx ]]; then
+                nginx_cmd='/usr/local/openresty/nginx/sbin/nginx'
+            fi
+        fi
     fi
 }
 
@@ -128,14 +158,14 @@ check_flags_options()
 _main()
 {
     echo "Starting verification of Check Point support with local nginx server"
-    initializeEnviroment
+    initializeEnvironment
     getNginxVersion
     ${nginx_cmd} -V &> "$TMP_NGINX_UNPARSED_CONFIGURATION"
 
     if [[ $IS_VERBOSE_MODE_ACTIVE == true ]]; then
-    echo ""
+        echo ""
         cat ${TMP_NGINX_UNPARSED_CONFIGURATION}
-    echo ""
+        echo ""
     fi
 
     while IFS= read -ra UNPARSED_CONFIGURATION_LINE <&3; do
@@ -446,5 +476,6 @@ add_nginx_and_release_versions()
 
 echo -e "Check Point Nano Agent Nginx compatibility verifier version ${PACKAGE_VERSION}\n"
 check_flags_options "$@"
-initializeEnviroment
+initializeEnvironment
+_main
 _main

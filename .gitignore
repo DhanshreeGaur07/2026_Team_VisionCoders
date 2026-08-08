@@ -43,6 +43,55 @@
 **/CMakeScripts
 **/compile_commands.json
 
+# Build output directories
+build/
+build_out/
+out/
+dist/
+*.tar.gz
+*.deb
+*.rpm
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.vim/
+.vs/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp
+/tmp/
+/var/log/
+
+# Package manager files
+node_modules/
+vendor/
+*.egg-info/
+
 # In source specific files
 version_vars.h
 makeself_help
+
+# Coverage reports
+coverage/
+*.gcov
+*.gcda
+*.gcno
+
+# Test output
+test_results/
+*.xml
